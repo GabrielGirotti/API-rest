@@ -78,6 +78,13 @@ describe("GET /api/products/:id", () => {
     expect(response.body.errors[0].msg).toBe("ID no valido");
   });
 
+  it("Should send a 404 error - not find", async () => {
+    const productId = 2000;
+    const response = await request(server).get(`/api/products/${productId}`);
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe("Producto no encontrado");
+  });
+
   it("GET a JSON response with a single product", async () => {
     const response = await request(server).get(`/api/products/1`);
     expect(response.status).toBe(200);
@@ -87,6 +94,19 @@ describe("GET /api/products/:id", () => {
 });
 
 describe("PUT /api/products/:id", () => {
+  it("Should send a 404 error - not find", async () => {
+    const productId = 2000;
+    const response = await request(server)
+      .put(`/api/products/${productId}`)
+      .send({
+        name: "Prueba",
+        available: false,
+        price: 20,
+      });
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe("Producto no encontrado");
+  });
+
   it("Should send a 400 error", async () => {
     const response = await request(server)
       .put("/api/products/not-valid-id")
@@ -130,6 +150,85 @@ describe("PUT /api/products/:id", () => {
       price: 20,
     });
 
+    expect(response.body).toHaveProperty("data");
+    expect(response.status).toBe(200);
+
+    expect(response.body).not.toHaveProperty("errors");
+    expect(response.status).not.toBe(400);
+  });
+});
+
+describe("PATCH /api/products/:id", () => {
+  it("Should send a 404 error - not find", async () => {
+    const productId = 2000;
+    const response = await request(server)
+      .patch(`/api/products/${productId}`)
+      .send({
+        name: "Prueba",
+      });
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe("Producto no encontrado");
+  });
+
+  it("Should send a 400 error", async () => {
+    const response = await request(server)
+      .patch("/api/products/not-valid-id")
+      .send({
+        name: "Prueba",
+        avilable: true,
+        price: 20,
+      });
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("errors");
+    expect(response.body.errors[0].msg).toBe("ID no valido");
+  });
+
+  it("Should send a error when the price is lower than 0", async () => {
+    const response = await request(server).put("/api/products/1").send({
+      name: "Prueba",
+      avilable: true,
+      price: -20,
+    });
+    expect(response.body).toHaveProperty("errors");
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0].msg).toBe("El valor debe ser mayor a cero");
+
+    expect(response.body).not.toHaveProperty("data");
+    expect(response.status).not.toBe(200);
+  });
+
+  it("Should update the data", async () => {
+    const response = await request(server).put("/api/products/1").send({
+      name: "Prueba",
+      available: true,
+      price: 20,
+    });
+
+    expect(response.body).toHaveProperty("data");
+    expect(response.status).toBe(200);
+
+    expect(response.body).not.toHaveProperty("errors");
+    expect(response.status).not.toBe(400);
+  });
+});
+
+describe("DELETE /api/products/:id", () => {
+  it("Should send a 404 error - not find", async () => {
+    const productId = 2000;
+    const response = await request(server).delete(`/api/products/${productId}`);
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe("Producto no encontrado");
+  });
+
+  it("Should check a valid id", async () => {
+    const response = await request(server).delete("/api/products/not-valid-id");
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("errors");
+    expect(response.body.errors[0].msg).toBe("ID no valido");
+  });
+
+  it("Should delete the product", async () => {
+    const response = await request(server).delete("/api/products/1");
     expect(response.body).toHaveProperty("data");
     expect(response.status).toBe(200);
 
