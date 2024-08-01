@@ -71,7 +71,7 @@ describe("GET /api/products", () => {
 });
 
 describe("GET /api/products/:id", () => {
-  it("Should send a 404 error", async () => {
+  it("Should send a 400 error", async () => {
     const response = await request(server).get("/api/products/not-valid-id");
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty("errors");
@@ -83,5 +83,57 @@ describe("GET /api/products/:id", () => {
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("data");
     expect(response.body).not.toHaveProperty("errors");
+  });
+});
+
+describe("PUT /api/products/:id", () => {
+  it("Should send a 400 error", async () => {
+    const response = await request(server)
+      .put("/api/products/not-valid-id")
+      .send({
+        name: "Prueba",
+        avilable: true,
+        price: 20,
+      });
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("errors");
+    expect(response.body.errors[0].msg).toBe("ID no valido");
+  });
+
+  it("Should send a error when the PUT an empty update", async () => {
+    const response = await request(server).put("/api/products/1").send({});
+    expect(response.body).toHaveProperty("errors");
+    expect(response.status).toBe(400);
+
+    expect(response.body).not.toHaveProperty("data");
+    expect(response.status).not.toBe(200);
+  });
+
+  it("Should send a error when the price is lower than 0", async () => {
+    const response = await request(server).put("/api/products/1").send({
+      name: "Prueba",
+      avilable: true,
+      price: -20,
+    });
+    expect(response.body).toHaveProperty("errors");
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0].msg).toBe("El valor debe ser mayor a cero");
+
+    expect(response.body).not.toHaveProperty("data");
+    expect(response.status).not.toBe(200);
+  });
+
+  it("Should update the data", async () => {
+    const response = await request(server).put("/api/products/1").send({
+      name: "Prueba",
+      available: true,
+      price: 20,
+    });
+
+    expect(response.body).toHaveProperty("data");
+    expect(response.status).toBe(200);
+
+    expect(response.body).not.toHaveProperty("errors");
+    expect(response.status).not.toBe(400);
   });
 });
